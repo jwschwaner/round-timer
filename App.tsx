@@ -36,6 +36,8 @@ export default function App() {
     setSettings(newSettings);
     timer.updateSettings(newSettings);
     await saveSettings(newSettings);
+    // Reset timer to apply new settings
+    timer.reset();
   };
 
   const formatTime = (seconds: number) => {
@@ -116,27 +118,32 @@ export default function App() {
                   </Svg>
                 </View>
 
-                <VStack space="2xl" alignItems="center">
-                  {/* Status Row */}
-                  <HStack width="100%" justifyContent="space-between" alignItems="center">
-                    <Text fontSize={13} fontWeight="600" letterSpacing={1} color={COLORS.text}>
-                      {STRINGS.ready}
-                    </Text>
-                    <Text fontSize={13} color={COLORS.textSecondary}>
-                      {STRINGS.round} {timer.currentRound}/{timer.totalRounds}
-                    </Text>
-                  </HStack>
+                  <VStack space="2xl" alignItems="center">
+                    {/* Status Row */}
+                    <HStack width="100%" justifyContent="space-between" alignItems="center">
+                      <Text fontSize={13} fontWeight="400" letterSpacing={1} color={COLORS.text}>
+                        {timer.timerState === 'active' 
+                          ? (timer.currentPhase === 'round' ? 'ROUND' : 'BREAK')
+                          : timer.timerState === 'paused'
+                          ? 'PAUSED'
+                          : 'READY'}
+                      </Text>
+                      <Text fontSize={13} fontWeight="400" color={COLORS.textSecondary}>
+                        {STRINGS.round} {timer.currentRound}/{timer.totalRounds}
+                      </Text>
+                    </HStack>
 
                   {/* Time Display */}
                   <Text fontSize={80} fontWeight="700" color={COLORS.text} lineHeight={80}>
                     {formatTime(timer.timeRemaining)}
                   </Text>
 
-                  {/* Next Phase */}
-                  <Text fontSize={15} color={COLORS.textSecondary}>
-                    {STRINGS.next} {timer.currentPhase === 'round' ? STRINGS.break : STRINGS.round}{' '}
-                    {formatTime(timer.nextPhaseDuration)}
-                  </Text>
+                    {/* Next Phase */}
+                    <Text fontSize={15} color={COLORS.textSecondary}>
+                      {timer.currentPhase === 'round' && timer.currentRound === timer.totalRounds
+                        ? 'Next: DONE!'
+                        : `${STRINGS.next} ${timer.currentPhase === 'round' ? STRINGS.break : STRINGS.round} ${formatTime(timer.nextPhaseDuration)}`}
+                    </Text>
                 </VStack>
               </Box>
             </Box>
