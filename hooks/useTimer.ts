@@ -29,14 +29,25 @@ export const useTimer = (initialSettings: TimerSettings): TimerHookReturn => {
   const [settings, setSettings] = useState(initialSettings);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerStateRef = useRef(timerState);
+  const settingsRef = useRef(settings);
+
+  // Keep refs in sync
+  useEffect(() => {
+    timerStateRef.current = timerState;
+  }, [timerState]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const updateSettings = useCallback((newSettings: TimerSettings) => {
     setSettings(newSettings);
-    // If timer hasn't started, update the time remaining
-    if (timerState === 'not-started') {
+    // Immediately update time remaining if timer is not started
+    if (timerStateRef.current === 'not-started') {
       setTimeRemaining(newSettings.roundDuration);
     }
-  }, [timerState]);
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -60,11 +71,11 @@ export const useTimer = (initialSettings: TimerSettings): TimerHookReturn => {
 
   const reset = useCallback(() => {
     clearTimer();
-    setTimerState('not-started');
     setCurrentPhase('round');
     setCurrentRound(1);
-    setTimeRemaining(settings.roundDuration);
-  }, [clearTimer, settings.roundDuration]);
+    setTimeRemaining(settingsRef.current.roundDuration);
+    setTimerState('not-started');
+  }, [clearTimer]);
 
   useEffect(() => {
     if (timerState === 'active') {

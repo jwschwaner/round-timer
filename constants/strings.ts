@@ -16,4 +16,8 @@ export const STRINGS = {
   cancel: 'Cancel',
   minutes: 'm',
   seconds: 's',
+  savePreset: 'Save Preset',
+  presetNamePrompt: 'Give this preset a name:',
+  presetNamePlaceholder: 'e.g. HIIT Workout',
+  selectPreset: 'Load preset...',
 };

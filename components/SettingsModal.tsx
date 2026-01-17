@@ -21,6 +21,7 @@ interface SettingsModalProps {
   settings: TimerSettings;
   onClose: () => void;
   onSave: (settings: TimerSettings) => void;
+  onSavePreset?: () => void;
 }
 
 type PickerMode = 'round' | 'break' | null;
@@ -30,6 +31,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onClose,
   onSave,
+  onSavePreset,
 }) => {
   const [localSettings, setLocalSettings] = useState<TimerSettings>(settings);
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
@@ -153,9 +155,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Text fontSize={24} fontWeight="600" color={COLORS.text}>
                 {STRINGS.sessionSettings}
               </Text>
-              <TouchableOpacity onPress={onClose}>
-                <Ionicons name="close" size={28} color={COLORS.text} />
-              </TouchableOpacity>
+              <HStack space="md" alignItems="center">
+                {onSavePreset && (
+                  <TouchableOpacity onPress={onSavePreset}>
+                    <Ionicons name="bookmark-outline" size={28} color={COLORS.text} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={28} color={COLORS.text} />
+                </TouchableOpacity>
+              </HStack>
             </HStack>
 
             <VStack space="md">

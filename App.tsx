@@ -9,13 +9,18 @@ import Svg, { Circle } from 'react-native-svg';
 import { COLORS } from './constants/colors';
 import { STRINGS } from './constants/strings';
 import { useTimer } from './hooks/useTimer';
-import { loadSettings, saveSettings, TimerSettings, DEFAULT_SETTINGS } from './utils/storage';
+import { loadSettings, saveSettings, TimerSettings, DEFAULT_SETTINGS, loadPresets, savePreset, deletePreset, TimerPreset, loadActivePresetId, saveActivePresetId } from './utils/storage';
 import { initAudio } from './utils/audio';
 import { SettingsModal } from './components/SettingsModal';
+import { SavePresetModal } from './components/SavePresetModal';
+import { PresetSelector } from './components/PresetSelector';
 
 export default function App() {
   const [settings, setSettings] = useState<TimerSettings>(DEFAULT_SETTINGS);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [savePresetVisible, setSavePresetVisible] = useState(false);
+  const [presets, setPresets] = useState<TimerPreset[]>([]);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   const timer = useTimer(settings);
@@ -24,7 +29,11 @@ export default function App() {
     const initialize = async () => {
       await initAudio();
       const loadedSettings = await loadSettings();
+      const loadedPresets = await loadPresets();
+      const loadedActivePresetId = await loadActivePresetId();
       setSettings(loadedSettings);
+      setPresets(loadedPresets);
+      setActivePresetId(loadedActivePresetId);
       timer.updateSettings(loadedSettings);
       setIsReady(true);
     };
@@ -33,11 +42,38 @@ export default function App() {
   }, []);
 
   const handleSettingsSave = async (newSettings: TimerSettings) => {
+    // Update all settings
     setSettings(newSettings);
     timer.updateSettings(newSettings);
     await saveSettings(newSettings);
-    // Reset timer to apply new settings
+    // Clear active preset when manually changing settings
+    setActivePresetId(null);
+    await saveActivePresetId(null);
+    // Reset timer after everything is updated
     timer.reset();
+  };
+
+  const handleSavePreset = async (name: string) => {
+    await savePreset(name, settings);
+    const updatedPresets = await loadPresets();
+    setPresets(updatedPresets);
+  };
+
+  const handleSelectPreset = async (preset: TimerPreset) => {
+    // Immediately apply preset settings
+    const newSettings = preset.settings;
+    setSettings(newSettings);
+    timer.updateSettings(newSettings);
+    setActivePresetId(preset.id);
+    await saveActivePresetId(preset.id);
+    // Reset timer after settings are updated
+    timer.reset();
+  };
+
+  const handleDeletePreset = async (presetId: string) => {
+    await deletePreset(presetId);
+    const updatedPresets = await loadPresets();
+    setPresets(updatedPresets);
   };
 
   const formatTime = (seconds: number) => {
@@ -90,20 +126,29 @@ export default function App() {
 
             {/* Timer Card */}
             <Box flex={3}>
-              <Box
-                flex={1}
-                backgroundColor={COLORS.white}
-                borderRadius={24}
-                padding={32}
-                shadowColor={COLORS.shadow}
-                shadowOffset={{ width: 0, height: 4 }}
-                shadowOpacity={0.1}
-                shadowRadius={12}
-                elevation={5}
-                position="relative"
-                overflow="hidden"
-                justifyContent="center"
-              >
+              <VStack space="md" flex={1}>
+                {/* Preset Selector */}
+                <PresetSelector
+                  presets={presets}
+                  activePresetId={activePresetId}
+                  onSelectPreset={handleSelectPreset}
+                  onDeletePreset={handleDeletePreset}
+                />
+
+                <Box
+                  flex={1}
+                  backgroundColor={COLORS.white}
+                  borderRadius={24}
+                  padding={32}
+                  shadowColor={COLORS.shadow}
+                  shadowOffset={{ width: 0, height: 4 }}
+                  shadowOpacity={0.1}
+                  shadowRadius={12}
+                  elevation={5}
+                  position="relative"
+                  overflow="hidden"
+                  justifyContent="center"
+                >
                 {/* Decorative circle - top right */}
                 <View style={styles.decorativeCircle}>
                   <Svg height="200" width="200" viewBox="0 0 200 200">
@@ -145,7 +190,8 @@ export default function App() {
                         : `${STRINGS.next} ${timer.currentPhase === 'round' ? STRINGS.break : STRINGS.round} ${formatTime(timer.nextPhaseDuration)}`}
                     </Text>
                 </VStack>
-              </Box>
+                </Box>
+              </VStack>
             </Box>
 
             {/* Play/Pause Button */}
@@ -176,7 +222,7 @@ export default function App() {
             <TouchableOpacity onPress={timer.reset}>
               <Box
                 backgroundColor="transparent"
-                borderWidth={1}
+                borderWidth={1.5}
                 borderColor={COLORS.border}
                 borderRadius={20}
                 height={56}
@@ -200,6 +246,14 @@ export default function App() {
             settings={settings}
             onClose={() => setSettingsVisible(false)}
             onSave={handleSettingsSave}
+            onSavePreset={() => setSavePresetVisible(true)}
+          />
+
+          {/* Save Preset Modal */}
+          <SavePresetModal
+            visible={savePresetVisible}
+            onClose={() => setSavePresetVisible(false)}
+            onSave={handleSavePreset}
           />
         </Box>
       </SafeAreaView>
