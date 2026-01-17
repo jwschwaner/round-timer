@@ -13,17 +13,19 @@ export const initAudio = async () => {
       shouldDuckAndroid: false,
     });
 
-    // Pre-load the beep sounds
+    // Pre-load the beep sounds with maximum volume
     const { sound: shortSound } = await Audio.Sound.createAsync(
       require('../assets/sounds/short-beep.mp3'),
       { shouldPlay: false, volume: 1.0 }
     );
+    await shortSound.setVolumeAsync(1.0);
     shortBeepSound = shortSound;
 
     const { sound: longSound } = await Audio.Sound.createAsync(
       require('../assets/sounds/long-beep.mp3'),
       { shouldPlay: false, volume: 1.0 }
     );
+    await longSound.setVolumeAsync(1.0);
     longBeepSound = longSound;
   } catch (error) {
     console.error('Error initializing audio:', error);

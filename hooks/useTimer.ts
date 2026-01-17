@@ -98,10 +98,12 @@ export const useTimer = (initialSettings: TimerSettings): TimerHookReturn => {
                 setCurrentPhase('break');
                 return settings.breakDuration;
               } else {
-                // All rounds completed
+                // All rounds completed - automatically reset
                 clearTimer();
-                setTimerState('completed');
-                return 0;
+                setCurrentPhase('round');
+                setCurrentRound(1);
+                setTimerState('not-started');
+                return settings.roundDuration;
               }
             } else {
               // Break ended, move to next round
